@@ -27,16 +27,16 @@ public class numberworker {
      * This method gets a file and reads all Integer out of it.
      * It will return the amount of Integer, but it would also be possible to return the numbers.
      *
-     * @param textfile : java.io.File
+     * @param textFile : java.io.File
      */
-    public int findNumbers(File textfile) {
+    public int findNumbers(File textFile) {
         List numbers = new ArrayList();
         int numberCounter = 0;
         Scanner input = null;
         try {
-            input = new Scanner(textfile);
+            input = new Scanner(textFile);
         } catch (Exception ex) {
-            System.out.println("Can not open file: " + textfile.getName());
+            System.out.println("Can not open file: " + textFile.getName());
         }
         while (input.hasNextInt()) {
             int number = input.nextInt();
