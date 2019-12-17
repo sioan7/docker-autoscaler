@@ -10,6 +10,11 @@
 
 Each component has to be its own application so it is containerizable.
 
+###
+Things we agreed on:
+- Name of the Database (MongoDB) --> TextDocumentsDB
+- Names of the MQs --> NumberWorkerMQ, SortWorkerMQ, ReduceWorkerMQ
+
 ### Front end
 User perspective
 - upload file
