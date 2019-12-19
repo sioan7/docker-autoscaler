@@ -1,26 +1,31 @@
 import com.mongodb.ConnectionString;
-import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class numberworker {
+class numberworker {
 
-    MongoDatabase db;
-    MongoClient mongoClient;
-    GridFSBucket gridFSFilesBucket;
+    private MongoDatabase db;
+    private MongoClient mongoClient;
+    GridFSBucket gridFSBucket;
 
-    public numberworker() {
-        mongoClient = MongoClients.create();
+    numberworker() {
+        mongoClient = MongoClients.create(new ConnectionString("mongodb://0.0.0.0:27017"));
         db = mongoClient.getDatabase("TextDocumentsDB");
         // Create a gridFSBucket with a custom bucket name "files"
-        gridFSFilesBucket = GridFSBuckets.create(db, "files");
+        gridFSBucket = GridFSBuckets.create(db, "files");
     }
 
     /**
@@ -29,19 +34,26 @@ public class numberworker {
      *
      * @param textFile : java.io.File
      */
-    public int findNumbers(File textFile) {
+    int findNumbers(File textFile) {
         List numbers = new ArrayList();
         int numberCounter = 0;
         Scanner input = null;
+        Pattern p = Pattern.compile("-?\\d+");
         try {
-            input = new Scanner(textFile);
-        } catch (Exception ex) {
-            System.out.println("Can not open file: " + textFile.getName());
-        }
-        while (input.hasNextInt()) {
-            int number = input.nextInt();
-            numbers.add(number);
-            numberCounter++;
+            FileReader fr = new FileReader(textFile);   //reads the file
+            BufferedReader br = new BufferedReader(fr);  //creates a buffering character input stream
+            String line;
+            while ((line = br.readLine()) != null) {
+                Matcher m = p.matcher(line);
+                while (m.find()) {
+                    String s = m.group();
+                    numbers.add(Integer.parseInt(s));
+                    numberCounter++;
+                }
+            }
+            fr.close();    //closes the stream and release the resources
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return numberCounter;
     }
