@@ -1,22 +1,17 @@
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.gridfs.GridFSBucket;
-import com.mongodb.client.gridfs.GridFSBuckets;
-
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
-public class reduceworker {
-    MongoDatabase db;
-    MongoClient mongoClient;
-    GridFSBucket gridFSFilesBucket;
+public class ReduceWorker extends AbstractWorker {
 
-    public reduceworker(){
-        mongoClient = MongoClients.create();
-        db = mongoClient.getDatabase("TextDocumentsDB");
-        // Create a gridFSBucket with a custom bucket name "files"
-        gridFSFilesBucket = GridFSBuckets.create(db, "files");
+    public ReduceWorker() throws IOException, TimeoutException {
+        super("ReduceWorkerMQ", "ReduceWorker");
+    }
+
+    @Override
+    public void handleTasks() {
+
     }
 
     public String reduceLists(List<List<Integer>> listOfNumberLists) {
