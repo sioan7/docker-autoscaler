@@ -15,7 +15,7 @@ Things we agreed on:
 - Name of the Database (MongoDB) --> TextDocumentsDB
 - Names of the MQs --> NumberWorkerMQ, SortWorkerMQ, ReduceWorkerMQ
 
-JSON for the NumberWorkerMQ:
+JSON for the NumberWorkerMQ, SortWorkerMQ and ReduceWorkerMQ:
 {
   "FileID": "Something",
   "FileName": "Something"

@@ -1,17 +1,10 @@
-import com.mongodb.ConnectionString;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.gridfs.GridFSBucket;
-import com.mongodb.client.gridfs.GridFSBuckets;
-import com.mongodb.client.gridfs.GridFSDownloadStream;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
 import org.json.JSONObject;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -19,40 +12,13 @@ import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class numberworker {
+class NumberWorker extends AbstractWorker {
 
-    //Static variables
-    private final String QueueName = "NumberWorkerMQ";
-    private final String ServiceName = "NumberWorker";
-
-    //MongoDB Attributes
-    private MongoDatabase db;
-    private MongoClient mongoClient;
-    GridFSBucket gridFSBucket;
-
-    //RabbitMQ Attributes
-    ConnectionFactory factory;
-    Connection connection;
-    Channel channel;
-    //String QueueName;
-
-    numberworker() throws IOException, TimeoutException {
-        //MongoDB inits
-        mongoClient = MongoClients.create(new ConnectionString("mongodb://0.0.0.0:27017"));
-        db = mongoClient.getDatabase("TextDocumentsDB");
-        // Create a gridFSBucket with a custom bucket name "files"
-        gridFSBucket = GridFSBuckets.create(db, "files");
-
-        //RabbitMQ inits
-        factory = new ConnectionFactory();
-        factory.setHost("localhost");
-        factory.setPort(5672);
-        connection = factory.newConnection();
-        channel = connection.createChannel();
-        channel.queueDeclare(QueueName, false, false, false, null);
-        channel.basicQos(1); // accept only one unack-ed message at a time (see below)
+    NumberWorker() throws IOException, TimeoutException {
+        super("NumberWorkerMQ", "NumberWorker");
     }
 
+    @Override
     public void handleTasks() {
         System.out.println("Started service --> " + ServiceName);
         System.out.println("Waiting for tasks out of the queue");
@@ -77,7 +43,6 @@ class numberworker {
             e.printStackTrace();
         }
     }
-
     /**
      * This method gets a file and reads all Integer out of it.
      * It will return the amount of Integer, but it would also be possible to return the numbers.
@@ -105,20 +70,7 @@ class numberworker {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         return numberCounter;
-    }
-
-    private File getFileFromMyMongo(String fileId) throws IOException {
-        GridFSDownloadStream downloadStream = gridFSBucket.openDownloadStream(fileId);
-        int fileLength = (int) downloadStream.getGridFSFile().getLength();
-        byte[] bytesToWriteTo = new byte[fileLength];
-        downloadStream.read(bytesToWriteTo);
-        downloadStream.close();
-
-        File tempFile = File.createTempFile("Temporary", ".txt", null);
-        FileOutputStream fos = new FileOutputStream(tempFile);
-        fos.write(bytesToWriteTo);
-
-        return tempFile;
     }
 }

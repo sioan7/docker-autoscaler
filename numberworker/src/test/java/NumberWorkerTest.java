@@ -16,14 +16,14 @@ import java.util.concurrent.TimeoutException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class numberworkerTest {
+public class NumberWorkerTest {
 
-    private numberworker numberworker;
+    private NumberWorker numberworker;
     private File test1;
 
     @Before
     public void setUpTests() throws IOException, TimeoutException {
-        numberworker = new numberworker();
+        numberworker = new NumberWorker();
         test1 = new File("src/test/resources/test1.txt");
     }
 
