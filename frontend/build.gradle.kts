@@ -18,11 +18,14 @@ dependencies {
     fun ktor() = "io.ktor:ktor:$ktorVersion"
 
     implementation(kotlin("stdlib-jdk8"))
+    implementation(ktor("html-builder"))
+    implementation(ktor("gson"))
     compile(ktor())
     compile(ktor("server-netty"))
     compile("ch.qos.logback:logback-classic:1.2.3")
     compile("org.mongodb:mongodb-driver-sync:3.11.2")
     compile("com.rabbitmq:amqp-client:5.8.0")
+    compile("org.mongodb:mongodb-driver-sync:3.12.0")
 }
 
 tasks {
