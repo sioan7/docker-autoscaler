@@ -1,3 +1,4 @@
+import com.mongodb.client.gridfs.GridFSBucket;
 import com.rabbitmq.client.DeliverCallback;
 import org.json.JSONObject;
 
@@ -12,9 +13,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class NumberWorker extends AbstractWorker {
+public class NumberWorker extends AbstractWorker {
 
-    NumberWorker() throws IOException, TimeoutException {
+    public NumberWorker() throws IOException, TimeoutException {
         super("NumberWorkerMQ", "NumberWorker");
     }
 
@@ -72,5 +73,9 @@ class NumberWorker extends AbstractWorker {
         }
 
         return numberCounter;
+    }
+
+    public GridFSBucket getGridFSBucket(){
+        return gridFSBucket;
     }
 }

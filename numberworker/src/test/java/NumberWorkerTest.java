@@ -46,14 +46,14 @@ public class NumberWorkerTest {
                     .chunkSizeBytes(358400)
                     .metadata(new Document("type", "text"));
 
-            fileId = numberworker.gridFSBucket.uploadFromStream("text1", streamToUploadFrom, options);
+            fileId = numberworker.getGridFSBucket().uploadFromStream("text1", streamToUploadFrom, options);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
 
         System.out.println("Stored fileID " + fileId);
 
-        GridFSDownloadStream downloadStream = numberworker.gridFSBucket.openDownloadStream(fileId);
+        GridFSDownloadStream downloadStream = numberworker.getGridFSBucket().openDownloadStream(fileId);
         int fileLength = (int) downloadStream.getGridFSFile().getLength();
         byte[] bytesToWriteTo = new byte[fileLength];
         downloadStream.read(bytesToWriteTo);
@@ -61,7 +61,7 @@ public class NumberWorkerTest {
 
         System.out.println(new String(bytesToWriteTo, StandardCharsets.UTF_8));
 
-        numberworker.gridFSBucket.delete(fileId);
+        numberworker.getGridFSBucket().delete(fileId);
     }
 
     @Test
