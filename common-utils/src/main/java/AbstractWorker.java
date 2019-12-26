@@ -30,7 +30,7 @@ public abstract class AbstractWorker implements IWorker {
     Channel channel;
 
 
-    public AbstractWorker(String queueName, String serviceName) throws IOException, TimeoutException {
+    public AbstractWorker(String queueName, String serviceName, int MQPort) throws IOException, TimeoutException {
         QueueName = queueName;
         ServiceName = serviceName;
 
@@ -43,7 +43,7 @@ public abstract class AbstractWorker implements IWorker {
         //RabbitMQ inits
         factory = new ConnectionFactory();
         factory.setHost("localhost");
-        factory.setPort(5672);
+        factory.setPort(MQPort);
         connection = factory.newConnection();
         channel = connection.createChannel();
         channel.queueDeclare(QueueName, false, false, false, null);

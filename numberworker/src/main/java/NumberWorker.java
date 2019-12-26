@@ -1,4 +1,3 @@
-import com.mongodb.client.gridfs.GridFSBucket;
 import com.rabbitmq.client.DeliverCallback;
 import org.json.JSONObject;
 
@@ -8,7 +7,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -16,7 +14,7 @@ import java.util.regex.Pattern;
 public class NumberWorker extends AbstractWorker {
 
     public NumberWorker() throws IOException, TimeoutException {
-        super("NumberWorkerMQ", "NumberWorker");
+        super("NumberWorkerMQ", "NumberWorker", 5672);
     }
 
     @Override
@@ -53,7 +51,6 @@ public class NumberWorker extends AbstractWorker {
     int findNumbers(File textFile) {
         List numbers = new ArrayList();
         int numberCounter = 0;
-        Scanner input = null;
         Pattern p = Pattern.compile("-?\\d+");
         try {
             FileReader fr = new FileReader(textFile);   //reads the file
@@ -73,9 +70,5 @@ public class NumberWorker extends AbstractWorker {
         }
 
         return numberCounter;
-    }
-
-    public GridFSBucket getGridFSBucket(){
-        return gridFSBucket;
     }
 }

@@ -11,46 +11,24 @@ import org.junit.Test;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
 
-public class ReduceWorkerTest {
+public class SortWorkerTest {
 
-    private ReduceWorker reduceworker;
+    private SortWorker sortworker;
     private File test1;
 
     @Before
     public void setUpTests() throws IOException, TimeoutException {
-        reduceworker = new ReduceWorker();
-        test1 = new File("src/test/resources/SortedNumbers.txt");
+        sortworker = new SortWorker();
+        test1 = new File("src/test/resources/test1.txt");
     }
 
     @Test
-    public void testReduceLists(){
-        List<List<Integer>> input = new ArrayList<>();
-        try {
-            FileReader fr = new FileReader(test1);   //reads the file
-            BufferedReader br = new BufferedReader(fr);  //creates a buffering character input stream
-            String line;
-            while ((line = br.readLine()) != null) {
-                Scanner scanner = new Scanner(line);
-                List<Integer> list = new ArrayList<Integer>();
-                while (scanner.hasNextInt()) {
-                    list.add(scanner.nextInt());
-                }
-                input.add(list);
-            }
-            fr.close();    //closes the stream and release the resources
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        String result = reduceworker.reduceLists(input);
-        System.out.println(result);
-        assertEquals("The result should look like \"[1, 5, 8, 15, 30, 42, 56, 56, 84, 108, 150, 320, 965, 1420, 2000, 2001]\"", "[1, 5, 8, 15, 30, 42, 56, 56, 84, 108, 150, 320, 965, 1420, 2000, 2001]", result);
+    public void sortInputFile() {
+        assertEquals("kkk", "iii");
     }
 
     /**
@@ -66,14 +44,14 @@ public class ReduceWorkerTest {
                     .chunkSizeBytes(358400)
                     .metadata(new Document("type", "text"));
 
-            fileId = reduceworker.gridFSBucket.uploadFromStream("text1", streamToUploadFrom, options);
+            fileId = sortworker.gridFSBucket.uploadFromStream("text1", streamToUploadFrom, options);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
 
         System.out.println("Stored fileID " + fileId);
 
-        GridFSDownloadStream downloadStream = reduceworker.gridFSBucket.openDownloadStream(fileId);
+        GridFSDownloadStream downloadStream = sortworker.gridFSBucket.openDownloadStream(fileId);
         int fileLength = (int) downloadStream.getGridFSFile().getLength();
         byte[] bytesToWriteTo = new byte[fileLength];
         downloadStream.read(bytesToWriteTo);
@@ -81,7 +59,7 @@ public class ReduceWorkerTest {
 
         System.out.println(new String(bytesToWriteTo, StandardCharsets.UTF_8));
 
-        reduceworker.gridFSBucket.delete(fileId);
+        sortworker.gridFSBucket.delete(fileId);
     }
 
     @Test
@@ -89,7 +67,7 @@ public class ReduceWorkerTest {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
         factory.setPort(5672);
-        String QueueName = "ReduceWorkerMQ";
+        String QueueName = "SortWorkerMQ";
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
             channel.queueDeclare(QueueName, false, false, false, null);
