@@ -11,7 +11,10 @@ import org.junit.Test;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 
@@ -19,16 +22,30 @@ public class SortWorkerTest {
 
     private SortWorker sortworker;
     private File test1;
+    private String testresultPath;
 
     @Before
     public void setUpTests() throws IOException, TimeoutException {
         sortworker = new SortWorker();
         test1 = new File("src/test/resources/test1.txt");
+        testresultPath = "src/test/resources/test1result.txt";
     }
 
     @Test
     public void sortInputFile() {
-        assertEquals("kkk", "iii");
+    	byte[] output = sortworker.sortInputFile(test1);
+    	String outputString = new String(output);
+        StringBuilder contentBuilder = new StringBuilder();
+        try (Stream<String> stream = Files.lines( Paths.get(testresultPath), StandardCharsets.UTF_8))
+        {
+            stream.forEach(s -> contentBuilder.append(s).append("\n"));
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        String testresultString = contentBuilder.toString();
+        assertEquals("It should look different", testresultString, outputString);
     }
 
     /**

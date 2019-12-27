@@ -22,18 +22,38 @@ public class ReduceWorkerTest {
 
     private ReduceWorker reduceworker;
     private File test1;
+    private File test2;
 
     @Before
     public void setUpTests() throws IOException, TimeoutException {
         reduceworker = new ReduceWorker();
-        test1 = new File("src/test/resources/SortedNumbers.txt");
+        test1 = new File("src/test/resources/test1result.txt");
+        test2 = new File("src/test/resources/SortedNumbers.txt");
+    }
+
+    @Test
+    public void testReduceLists2(){
+        List<List<Integer>> input = reduceworker.getInputForReduceLists(test1);
+        /**StringBuilder contentBuilder = new StringBuilder();
+        try (Stream<String> stream = Files.lines( Paths.get("src/test/resources/test1result.txt"), StandardCharsets.UTF_8))
+        {
+            stream.forEach(s -> contentBuilder.append(s).append("\n"));
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        String testresultString = contentBuilder.toString();*/
+        String result = reduceworker.reduceLists(input);
+        System.out.println(result);
+        assertEquals("The result should look different", "-5 1 2 3 22 34 ", result);
     }
 
     @Test
     public void testReduceLists(){
         List<List<Integer>> input = new ArrayList<>();
         try {
-            FileReader fr = new FileReader(test1);   //reads the file
+            FileReader fr = new FileReader(test2);   //reads the file
             BufferedReader br = new BufferedReader(fr);  //creates a buffering character input stream
             String line;
             while ((line = br.readLine()) != null) {
@@ -50,7 +70,7 @@ public class ReduceWorkerTest {
         }
         String result = reduceworker.reduceLists(input);
         System.out.println(result);
-        assertEquals("The result should look like \"[1, 5, 8, 15, 30, 42, 56, 56, 84, 108, 150, 320, 965, 1420, 2000, 2001]\"", "[1, 5, 8, 15, 30, 42, 56, 56, 84, 108, 150, 320, 965, 1420, 2000, 2001]", result);
+        assertEquals("The result should look like ", "1 5 8 15 30 42 56 56 84 108 150 320 965 1420 2000 2001 ", result);
     }
 
     /**

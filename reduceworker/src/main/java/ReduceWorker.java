@@ -58,10 +58,14 @@ public class ReduceWorker extends AbstractWorker {
             if (listOfNumberLists.get(indexOfListOfNumbersLists).isEmpty())
                 listOfNumberLists.remove(indexOfListOfNumbersLists);
         }
-        return returnList.toString();
+        String resultString = "";
+        for(int integ : returnList){
+            resultString = resultString + integ +" ";
+        }
+        return resultString;
     }
 
-    private List<List<Integer>> getInputForReduceLists(File file){
+    public List<List<Integer>> getInputForReduceLists(File file){
         List<List<Integer>> output = new ArrayList<>();
         try {
             FileReader fr = new FileReader(file);   //reads the file
