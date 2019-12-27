@@ -1,6 +1,0 @@
-rootProject.name = 'cco-assignment2'
-include 'numberworker'
-include 'common-utils'
-include 'reduceworker'
-include 'sortworker'
-
