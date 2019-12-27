@@ -1,8 +1,10 @@
+import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.rabbitmq.client.DeliverCallback;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.concurrent.TimeoutException;
 
 public class SortWorker extends AbstractWorker {
@@ -23,8 +25,9 @@ public class SortWorker extends AbstractWorker {
             String fileName = (String) jsonObject.get("FileName");
             System.out.println("Received file name " + fileName);
             File file = getFileFromMyMongo(fileID);
-            //TODO implement stuff
-//            System.out.println(sortedNumbers + " numbers are in the file " + fileName);
+            ObjectId newFileID = saveOutputFile(sortInputFile(file));
+            sendMessageToReducer();
+            System.out.println("File is sorted and stored in the MongoDB");
             channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
         };
 
@@ -37,7 +40,30 @@ public class SortWorker extends AbstractWorker {
         }
     }
 
-    public void sortInputFile(File textFile){
+    private void sendMessageToReducer() {
+
+    }
+
+    private ObjectId saveOutputFile(File sortOutputFile) {
+        ObjectId fileId = null;
+        try {
+            InputStream streamToUploadFrom = new FileInputStream(sortOutputFile);
+            // Create some custom options
+            GridFSUploadOptions options = new GridFSUploadOptions()
+                    .chunkSizeBytes(358400)
+                    .metadata(new Document("type", "text"));
+
+            fileId = gridFSBucket.uploadFromStream(sortOutputFile.getName(), streamToUploadFrom, options);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("Stored fileID " + fileId);
+        return fileId;
+    }
+
+    public File sortInputFile(File textFile){
         //TODO: implement stuff
+        return new File();
     }
 }
