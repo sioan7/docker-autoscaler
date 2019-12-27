@@ -2,10 +2,7 @@ echo Start initilization!
 
 docker run --name mymongo -p 27017:27017 -d mongo:latest
 
-echo Not sure about the ports though...
-docker run -d -p 5672:5672 --hostname NumberWorkerMQ --name NumberWorkerMQ rabbitmq:3
-docker run -d -p 5673:5673 --hostname SortWorkerMQ --name SortWorkerMQ rabbitmq:3
-docker run -d -p 5674:5674 --hostname ReduceWorkerMQ --name ReduceWorkerMQ rabbitmq:3
+docker run -d --name="RabbitMQ" --hostname="RabbitMQ" --publish="4369:4369" --publish="5671:5671" --publish="5672:5672" --publish="15671:15671" --publish="15672:15672" --publish="25672:25672" rabbitmq:3-management
 
 echo End initilization!
 PAUSE

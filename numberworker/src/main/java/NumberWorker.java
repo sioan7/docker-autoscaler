@@ -7,15 +7,14 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class NumberWorker extends AbstractWorker {
+public class NumberWorker extends AbstractWorker {
 
-    NumberWorker() throws IOException, TimeoutException {
-        super("NumberWorkerMQ", "NumberWorker");
+    public NumberWorker() throws IOException, TimeoutException {
+        super("NumberWorkerMQ", "NumberWorker", 5672);
     }
 
     @Override
@@ -52,7 +51,6 @@ class NumberWorker extends AbstractWorker {
     int findNumbers(File textFile) {
         List numbers = new ArrayList();
         int numberCounter = 0;
-        Scanner input = null;
         Pattern p = Pattern.compile("-?\\d+");
         try {
             FileReader fr = new FileReader(textFile);   //reads the file

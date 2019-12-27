@@ -7,8 +7,15 @@ version '1.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
-repositories {
-    mavenCentral()
+allprojects {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+}
+
+subprojects {
+    version = '1.0-SNAPSHOT'
 }
 
 dependencies {
@@ -16,5 +23,4 @@ dependencies {
     compile 'org.mongodb:mongodb-driver-sync:3.11.2'
     compile 'com.rabbitmq:amqp-client:5.8.0'
     compile 'org.json:json:20190722'
-    compile project(':common-utils')
 }
