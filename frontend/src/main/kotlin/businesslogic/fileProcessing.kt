@@ -21,7 +21,7 @@ private const val numberWorkerQueue = "NumberWorkerMQ"
 private const val sortWorkerQueue = "SortWorkerMQ"
 
 data class NumberWorkerMessage(val FileID: String, val FileName: String)
-data class SortWorkerMessage(val objectId: String, val chunk: Long)
+data class SortWorkerMessage(val FileID: String, val FileName: String, val Chunk: Long)
 
 fun processUploadedFile(): suspend PipelineContext<Unit, ApplicationCall>.(Unit) -> Unit {
     return {
@@ -37,9 +37,10 @@ fun processUploadedFile(): suspend PipelineContext<Unit, ApplicationCall>.(Unit)
                         val myDatabase = mongoClient.getDatabase("TextDocumentsDB")
                         val gridFSBucket = GridFSBuckets.create(myDatabase)
                         val options = GridFSUploadOptions().chunkSizeBytes(255 * 1024)
-                        fileId = gridFSBucket.uploadFromStream(part.originalFileName, it, options)
+                        val filename = part.originalFileName.orEmpty()
+                        fileId = gridFSBucket.uploadFromStream(filename, it, options)
                         val chunks = myDatabase.getCollection("fs.chunks").find(eq("files_id", fileId)).count().toLong()
-                        val objectId = fileId.toString()
+                        val objectId = fileId?.toHexString().orEmpty()
                         mongoClient.close()
                         val factory = ConnectionFactory()
                         factory.host = "localhost"
@@ -50,14 +51,18 @@ fun processUploadedFile(): suspend PipelineContext<Unit, ApplicationCall>.(Unit)
                                 channel.queueDeclare(numberWorkerQueue, false, false, false, null)
                                 val numberWorkerMessage = gsonBuilder.toJson(NumberWorkerMessage(
                                     objectId,
-                                    part.originalFileName.orEmpty()
+                                    filename
                                 ))
                                 channel.basicPublish("", numberWorkerQueue, null, numberWorkerMessage.toByteArray())
                                 println(" [x] Sent '$numberWorkerMessage'")
 
                                 channel.queueDeclare(sortWorkerQueue, false, false, false, null)
                                 for (i in 0 until chunks) {
-                                    val sortWorkerMessage = gsonBuilder.toJson(SortWorkerMessage(objectId, i))
+                                    val sortWorkerMessage = gsonBuilder.toJson(SortWorkerMessage(
+                                        objectId,
+                                        filename,
+                                        i
+                                    ))
                                     channel.basicPublish("", sortWorkerQueue, null, sortWorkerMessage.toByteArray())
                                     println(" [x] Sent '$sortWorkerMessage'")
                                 }
@@ -69,5 +74,32 @@ fun processUploadedFile(): suspend PipelineContext<Unit, ApplicationCall>.(Unit)
             part.dispose()
         }
         call.respond(HttpStatusCode.OK, mapOf("value" to fileId?.toHexString()))
+    }
+}
+
+fun retrieveNumberWorkerResult(): suspend PipelineContext<Unit, ApplicationCall>.(Unit) -> Unit {
+    return {
+        val fileId = call.request.queryParameters["fileId"]
+        val mongoClient = MongoClients.create("mongodb://localhost")
+        val myDatabase = mongoClient.getDatabase("TextDocumentsDB")
+        val amount = myDatabase.getCollection("numbers").find(eq("file_id", ObjectId(fileId))).first()?.get("amount")
+        mongoClient.close()
+        call.respond(HttpStatusCode.OK, mapOf("value" to amount))
+    }
+}
+
+fun retrieveSortWorkerResult(): suspend PipelineContext<Unit, ApplicationCall>.(Unit) -> Unit {
+    return {
+        val fileId = call.request.queryParameters["fileId"]
+        val mongoClient = MongoClients.create("mongodb://localhost")
+        val myDatabase = mongoClient.getDatabase("TextDocumentsDB")
+        val rawChunks = myDatabase.getCollection("fs.chunks").find(eq("files_id", ObjectId(fileId))).count().toLong()
+        val processedChunks = myDatabase.getCollection("sort.chunks").find(eq("file_id", ObjectId(fileId))).count().toLong()
+        mongoClient.close()
+        val status = when {
+            processedChunks < rawChunks -> "$processedChunks / $rawChunks"
+            else -> "merging chunks"
+        }
+        call.respond(HttpStatusCode.OK, mapOf("value" to status))
     }
 }

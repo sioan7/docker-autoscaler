@@ -1,0 +1,15 @@
+#refreshInformation {
+    visibility: hidden;
+}
+
+#numberResult {
+    visibility: hidden;
+}
+
+#currentStatus {
+    visibility: hidden;
+}
+
+#downloadButton {
+    visibility: hidden;
+}

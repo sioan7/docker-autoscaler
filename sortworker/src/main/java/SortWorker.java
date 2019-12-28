@@ -17,6 +17,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.mongodb.client.model.Filters.eq;
+
 public class SortWorker extends AbstractWorker {
 
     public SortWorker() throws IOException, TimeoutException {
@@ -33,12 +35,18 @@ public class SortWorker extends AbstractWorker {
             JSONObject jsonObject = new JSONObject(message);
             String fileID = (String) jsonObject.get("FileID");
             String fileName = (String) jsonObject.get("FileName");
+            Integer chunk = (Integer) jsonObject.get("Chunk");
             String fileNameSorted = fileName + "_sorted";
             System.out.println("Received file name " + fileName);
             File file = getFileFromMyMongo(fileID);
             ObjectId newFileID = saveOutputFile(sortInputFile(file), fileNameSorted);
-            sendMessageToReducer(newFileID, fileNameSorted);
-            System.out.println("File is sorted and stored in the MongoDB");
+            int totalChunks = db.getCollection("fs.chunks")
+                    .find(eq("files_id", fileID))
+                    .into(new ArrayList<>()).size();
+            if (chunk == totalChunks) {
+                sendMessageToReducer(newFileID, fileNameSorted);
+            }
+            System.out.println("Chunk is sorted and stored in the MongoDB");
             channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
         };
 
@@ -65,7 +73,7 @@ public class SortWorker extends AbstractWorker {
     }
 
     private ObjectId saveOutputFile(byte[] sortOutput, String fileNameSorted) {
-    	GridFSUploadOptions options = new GridFSUploadOptions().chunkSizeBytes(358400).metadata(new Document("type", "text"));
+    	GridFSUploadOptions options = new GridFSUploadOptions().chunkSizeBytes(255 * 1024).metadata(new Document("type", "text"));
     	GridFSUploadStream uploadStream = gridFSBucket.openUploadStream(fileNameSorted, options);
     	uploadStream.write(sortOutput);
     	uploadStream.close();

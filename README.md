@@ -2,11 +2,11 @@
 
 ## TODO
 - [ ] IOAN -> Front end
-- [ ] JAN -> Number worker
+- [x] JAN -> Number worker
 - [ ] JAN -> Sort worker
 - [ ] JAN -> Reduce worker
 - [ ] IOAN -> Containerize each component with Docker
-- [ ] IOAN -> Deploy to Kubernetes 
+- [ ] IOAN -> Deploy to Kubernetes / with docker-compose
 
 Each component has to be its own application so it is containerizable.
 
@@ -80,5 +80,15 @@ root@dae2ccd08dc3:/# mongofiles --host mymongo --help
 Install RabbitMQ and spin up a Docker container
 
 ```
-docker run -d -p 5672:5672 --hostname myrabbit --name myrabbit rabbitmq:3
+docker run -d -p 5672:5672 --hostname myrabbit --name myrabbit rabbitmq:3-management
 ```
+
+Check RabbitMQ management: `http://localhost:15672/`
+
+Install Mongo Express monitoring:
+
+```
+docker run -it --rm -p 8081:8081 --link mymongo:mongo mongo-express
+```
+
+Check Mongo database: `http://localhost:8081/`

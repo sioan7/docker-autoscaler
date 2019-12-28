@@ -35,15 +35,15 @@ public abstract class AbstractWorker implements IWorker {
         ServiceName = serviceName;
 
         //MongoDB inits
-        mongoClient = MongoClients.create(new ConnectionString("mongodb://0.0.0.0:27017"));
+        mongoClient = MongoClients.create(new ConnectionString("mongodb://localhost"));
         db = mongoClient.getDatabase("TextDocumentsDB");
         // Create a gridFSBucket with a custom bucket name "files"
-        gridFSBucket = GridFSBuckets.create(db, "files");
+        gridFSBucket = GridFSBuckets.create(db);
 
         //RabbitMQ inits
         factory = new ConnectionFactory();
         factory.setHost("localhost");
-        factory.setPort(MQPort);
+//        factory.setPort(MQPort);
         connection = factory.newConnection();
         channel = connection.createChannel();
         channel.queueDeclare(QueueName, false, false, false, null);
