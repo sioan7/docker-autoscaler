@@ -38,7 +38,10 @@ fun Application.primaryModule() {
 }
 
 fun Route.routePages() {
-    get("/", body = { call.respondHtml(block = index) })
+    get("/", body = {
+        val s: String? = call.request.queryParameters["fileId"]
+        call.respondHtml(block = index)
+    })
 }
 
 fun Route.routeStaticResources() {

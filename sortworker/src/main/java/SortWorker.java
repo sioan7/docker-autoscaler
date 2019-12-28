@@ -29,7 +29,7 @@ public class SortWorker extends AbstractWorker {
         System.out.println("Waiting for tasks out of the queue");
 
         DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-            String message = new String(delivery.getBody(), "UTF-8");
+            String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
             JSONObject jsonObject = new JSONObject(message);
             String fileID = (String) jsonObject.get("FileID");
             String fileName = (String) jsonObject.get("FileName");
