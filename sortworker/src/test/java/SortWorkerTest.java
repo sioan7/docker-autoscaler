@@ -33,7 +33,7 @@ public class SortWorkerTest {
 
     @Test
     public void sortInputFile() {
-    	byte[] output = sortworker.sortInputFile(test1);
+    	byte[] output = sortworker.sortChunk(test1);
     	String outputString = new String(output);
         StringBuilder contentBuilder = new StringBuilder();
         try (Stream<String> stream = Files.lines( Paths.get(testresultPath), StandardCharsets.UTF_8))

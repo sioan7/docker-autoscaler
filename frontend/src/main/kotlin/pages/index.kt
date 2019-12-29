@@ -27,7 +27,7 @@ val index: HTML.() -> Unit = {
         }
         p {
             id = "numberResult"
-            +"Number of numbers: ${1234}"
+            +"Number of numbers: unknown"
         }
         button {
             onClick = "downloadFile()"
