@@ -45,7 +45,18 @@ public abstract class AbstractWorker implements IWorker {
         factory = new ConnectionFactory();
         factory.setHost("myrabbit");
 //        factory.setPort(MQPort);
-        connection = factory.newConnection();
+        while (connection == null) {
+            try {
+                connection = factory.newConnection();
+            } catch (Exception e) {
+                e.printStackTrace();
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
         channel = connection.createChannel();
         channel.queueDeclare(QueueName, false, false, false, null);
         channel.basicQos(1); // accept only one unack-ed message at a time (see below)

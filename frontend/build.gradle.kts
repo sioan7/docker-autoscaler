@@ -21,7 +21,7 @@ group = "nl.leidenuniv"
 version = "1.0-SNAPSHOT"
 
 application {
-    mainClassName = "nl.leidenuniv.ApplicationKt"
+    mainClassName = "io.ktor.server.netty.EngineMain"
 }
 
 repositories {

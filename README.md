@@ -55,6 +55,13 @@ Implementation
 
 ## Commands
 
+Build the application with **docker-compose**
+
+```
+docker-compose build
+docker-compose up
+```
+
 Install MongoDB and spinn up a Docker container
 
 ```
