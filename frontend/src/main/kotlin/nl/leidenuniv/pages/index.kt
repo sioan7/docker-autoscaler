@@ -1,4 +1,4 @@
-package pages
+package nl.leidenuniv.pages
 
 import kotlinx.html.*
 

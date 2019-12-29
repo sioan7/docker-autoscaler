@@ -1,4 +1,5 @@
-import businesslogic.*
+package nl.leidenuniv
+
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -13,7 +14,8 @@ import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import pages.index
+import nl.leidenuniv.businesslogic.*
+import nl.leidenuniv.pages.index
 import java.io.*
 
 fun main() {
@@ -39,14 +41,13 @@ fun Application.primaryModule() {
 
 fun Route.routePages() {
     get("/", body = {
-        val s: String? = call.request.queryParameters["fileId"]
         call.respondHtml(block = index)
     })
 }
 
 fun Route.routeStaticResources() {
     static("static") {
-        staticRootFolder = File("src/main/resources/static")
+        staticRootFolder = File("src/nl.leidenuniv.main/resources/static")
         files("css")
         files("js")
         file("favicon.ico")

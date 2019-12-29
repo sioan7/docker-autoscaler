@@ -1,3 +1,5 @@
+package nl.leidenuniv;
+
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DeliverCallback;
 import org.bson.Document;
@@ -23,7 +25,7 @@ public class SortWorker extends AbstractWorker {
     private final String REDUCE_WORKER_QUEUE = "ReduceWorkerMQ";
 
     public SortWorker() throws IOException, TimeoutException {
-        super("SortWorkerMQ", "SortWorker", 5672);
+        super("SortWorkerMQ", "nl.leidenuniv.SortWorker", 5672);
         reduceChannel = connection.createChannel();
         reduceChannel.queueDeclare(REDUCE_WORKER_QUEUE, false, false, false, null);
         reduceChannel.basicQos(1); // accept only one unack-ed message at a time (see below)

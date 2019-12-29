@@ -1,3 +1,5 @@
+package nl.leidenuniv;
+
 import com.mongodb.ConnectionString;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -10,8 +12,6 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import org.bson.types.ObjectId;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
@@ -36,14 +36,14 @@ public abstract class AbstractWorker implements IWorker {
         ServiceName = serviceName;
 
         //MongoDB inits
-        mongoClient = MongoClients.create(new ConnectionString("mongodb://localhost"));
+        mongoClient = MongoClients.create(new ConnectionString("mongodb://mymongo"));
         db = mongoClient.getDatabase("TextDocumentsDB");
         // Create a gridFSBucket with a custom bucket name "files"
         gridFSBucket = GridFSBuckets.create(db);
 
         //RabbitMQ inits
         factory = new ConnectionFactory();
-        factory.setHost("localhost");
+        factory.setHost("myrabbit");
 //        factory.setPort(MQPort);
         connection = factory.newConnection();
         channel = connection.createChannel();

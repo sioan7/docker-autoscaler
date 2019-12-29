@@ -1,3 +1,5 @@
+package nl.leidenuniv;
+
 import com.rabbitmq.client.DeliverCallback;
 import org.bson.Document;
 import org.json.JSONObject;
@@ -13,7 +15,7 @@ public class NumberWorker extends AbstractWorker {
     private final DeliverCallback deliverCallback;
 
     public NumberWorker() throws IOException, TimeoutException {
-        super("NumberWorkerMQ", "NumberWorker", 5672);
+        super("NumberWorkerMQ", "nl.leidenuniv.NumberWorker", 5672);
         deliverCallback = createDeliverCallback();
     }
 

@@ -1,8 +1,9 @@
+package nl.leidenuniv;
+
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.rabbitmq.client.DeliverCallback;
 import org.bson.Document;
 import org.bson.types.Binary;
-import org.bson.types.ObjectId;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -17,7 +18,7 @@ import static com.mongodb.client.model.Filters.eq;
 public class ReduceWorker extends AbstractWorker {
 
     public ReduceWorker() throws IOException, TimeoutException {
-        super("ReduceWorkerMQ", "ReduceWorker", 5672);
+        super("ReduceWorkerMQ", "nl.leidenuniv.ReduceWorker", 5672);
     }
 
     @Override

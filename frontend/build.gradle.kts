@@ -1,10 +1,28 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
+buildscript {
+    repositories {
+        maven {
+            url = uri("https://plugins.gradle.org/m2/")
+        }
+    }
+    dependencies {
+        classpath("com.github.jengelman.gradle.plugins:shadow:5.2.0")
+    }
+}
+
 plugins {
     kotlin("jvm") version "1.3.60"
     application
+    id("com.github.johnrengelman.shadow") version "5.2.0"
 }
 
-group = "org.example"
+group = "nl.leidenuniv"
 version = "1.0-SNAPSHOT"
+
+application {
+    mainClassName = "nl.leidenuniv.ApplicationKt"
+}
 
 repositories {
     mavenCentral()
@@ -34,5 +52,16 @@ tasks {
     }
     compileTestKotlin {
         kotlinOptions.jvmTarget = "1.8"
+    }
+    withType<ShadowJar> {
+        baseName = "frontend"
+        classifier = null
+        version = null
+    }
+}
+
+tasks {
+    build {
+        dependsOn(shadowJar)
     }
 }
