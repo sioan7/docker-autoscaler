@@ -1,6 +1,4 @@
-import businesslogic.processUploadedFile
-import businesslogic.retrieveNumberWorkerResult
-import businesslogic.retrieveSortWorkerResult
+import businesslogic.*
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -59,4 +57,6 @@ fun Route.routeAPI() {
     post("/file", processUploadedFile())
     get("/numbers", retrieveNumberWorkerResult())
     get("/sortStatus", retrieveSortWorkerResult())
+    get("/downloadStatus", retrieveDownloadStatus())
+    get("/download", downloadFile())
 }

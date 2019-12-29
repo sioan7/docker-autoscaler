@@ -1,14 +1,18 @@
+import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.rabbitmq.client.DeliverCallback;
+import org.bson.Document;
+import org.bson.types.Binary;
+import org.bson.types.ObjectId;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
+
+import static com.mongodb.client.model.Filters.eq;
 
 public class ReduceWorker extends AbstractWorker {
 
@@ -22,15 +26,20 @@ public class ReduceWorker extends AbstractWorker {
         System.out.println("Waiting for tasks out of the queue");
 
         DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-            String message = new String(delivery.getBody(), "UTF-8");
-            JSONObject jsonObject = new JSONObject(message);
-            String fileID = (String) jsonObject.get("FileID");
-            String fileName = (String) jsonObject.get("FileName");
-            System.out.println("Received file name " + fileName);
-            File file = getFileFromMyMongo(fileID);
-            String sortedNumbers = reduceLists(getInputForReduceLists(file));
-            System.out.println(sortedNumbers + " numbers are in the file " + fileName);
-            channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+            try {
+                String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+                JSONObject jsonObject = new JSONObject(message);
+                String fileID = (String) jsonObject.get("FileID");
+                String fileName = (String) jsonObject.get("FileName");
+//                System.out.println("Received file name " + fileName);
+//                File file = getFileFromMyMongo(fileID);
+                String sortedNumbers = reduceLists(getInputForReduceLists(fileID));
+                saveDataInGridFS(fileID, fileName, sortedNumbers);
+                System.out.println("Reduced sorted lists " + fileID);
+                channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         };
 
         //autoAck off, thus we have to make the basicAck by ourselves, see above.
@@ -59,30 +68,33 @@ public class ReduceWorker extends AbstractWorker {
                 listOfNumberLists.remove(indexOfListOfNumbersLists);
         }
         String resultString = "";
-        for(int integ : returnList){
+        for (int integ : returnList) {
             resultString = resultString + integ +" ";
         }
         return resultString;
     }
 
-    public List<List<Integer>> getInputForReduceLists(File file){
+    public List<List<Integer>> getInputForReduceLists(String fileId){
         List<List<Integer>> output = new ArrayList<>();
-        try {
-            FileReader fr = new FileReader(file);   //reads the file
-            BufferedReader br = new BufferedReader(fr);  //creates a buffering character input stream
-            String line;
-            while ((line = br.readLine()) != null) {
-                Scanner scanner = new Scanner(line);
-                List<Integer> list = new ArrayList<Integer>();
-                while (scanner.hasNextInt()) {
-                    list.add(scanner.nextInt());
-                }
-                output.add(list);
-            }
-            fr.close();    //closes the stream and release the resources
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        db.getCollection("sorted.chunks")
+                .find(eq("file_id", fileId))
+                .forEach((Consumer<? super Document>) it -> {
+                    String data = new String(((Binary) it.get("data")).getData(), StandardCharsets.UTF_8);
+                    String[] split = data.split("\n");
+                    List<Integer> numbers = new ArrayList<>();
+                    for (String line : split) {
+                        String[] nos = line.split(" ");
+                        for (String s : nos) {
+                            numbers.add(Integer.parseInt(s));
+                        }
+                    }
+                    output.add(numbers);
+                });
         return output;
+    }
+
+    public void saveDataInGridFS(String fileId, String filename, String data) {
+        GridFSUploadOptions options = new GridFSUploadOptions().chunkSizeBytes(255 * 1024);
+        gridFSBucket.uploadFromStream(filename + "-" + fileId, new ByteArrayInputStream(data.getBytes()), options);
     }
 }

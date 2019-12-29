@@ -1,3 +1,4 @@
+import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DeliverCallback;
 import org.bson.Document;
 import org.bson.types.Binary;
@@ -18,8 +19,14 @@ import static com.mongodb.client.model.Filters.eq;
 
 public class SortWorker extends AbstractWorker {
 
+    public final Channel reduceChannel;
+    private final String REDUCE_WORKER_QUEUE = "ReduceWorkerMQ";
+
     public SortWorker() throws IOException, TimeoutException {
         super("SortWorkerMQ", "SortWorker", 5672);
+        reduceChannel = connection.createChannel();
+        reduceChannel.queueDeclare(REDUCE_WORKER_QUEUE, false, false, false, null);
+        reduceChannel.basicQos(1); // accept only one unack-ed message at a time (see below)
     }
 
     @Override
@@ -28,24 +35,33 @@ public class SortWorker extends AbstractWorker {
         System.out.println("Waiting for tasks out of the queue");
 
         DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-            String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-            JSONObject jsonObject = new JSONObject(message);
-            String fileId = (String) jsonObject.get("FileID");
-            Integer chunk = (Integer) jsonObject.get("Chunk");
-            System.out.println("Received chunk " + chunk + " from " + fileId);
-            byte[] data = ((Binary) db.getCollection("fs.chunks")
-                    .find(and(eq("files_id", new ObjectId(fileId)), eq("n", chunk)))
-                    .first()
-                    .get("data")).getData();
-            storeSortedChunk(sortChunk(data), fileId, chunk);
-            int totalChunks = db.getCollection("fs.chunks")
-                    .find(eq("files_id", fileId))
-                    .into(new ArrayList<>()).size();
-            if (chunk == totalChunks - 1) {
-                sendMessageToReducer(fileId);
+            try {
+                String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+                JSONObject jsonObject = new JSONObject(message);
+                String fileId = (String) jsonObject.get("FileID");
+                String filename = (String) jsonObject.get("FileName");
+                Integer chunk = (Integer) jsonObject.get("Chunk");
+                System.out.println("Received chunk " + chunk + " from " + fileId);
+                byte[] data = ((Binary) db.getCollection("fs.chunks")
+                        .find(and(eq("files_id", new ObjectId(fileId)), eq("n", chunk)))
+                        .first()
+                        .get("data")).getData();
+                storeSortedChunk(sortChunk(data), fileId, chunk);
+                int totalChunks = db.getCollection("fs.chunks")
+                        .find(eq("files_id", new ObjectId(fileId)))
+                        .into(new ArrayList<>()).size();
+                int processedChunks = db.getCollection("sorted.chunks")
+                        .find(eq("file_id", fileId))
+                        .into(new ArrayList<>()).size();
+                if (processedChunks == totalChunks) {
+                    sendMessageToReducer(fileId, filename);
+                    gridFSBucket.delete(new ObjectId(fileId));
+                }
+                System.out.println("Chunk is sorted and stored in MongoDB");
+                channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            System.out.println("Chunk is sorted and stored in MongoDB");
-            channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
         };
 
         //autoAck off, thus we have to make the basicAck by ourselves, see above.
@@ -57,20 +73,17 @@ public class SortWorker extends AbstractWorker {
         }
     }
 
-    private void sendMessageToReducer(String fileId) throws IOException {
-    	String queueNamePublish = "ReduceWorkerMQ";
-    	channel = connection.createChannel();
-        channel.queueDeclare(queueNamePublish, false, false, false, null);
-        channel.basicQos(1); // accept only one unack-ed message at a time (see below)
-        String message = "{\n" + 
-        		"  \"FileID\": \"" + fileId + "\",\n" +
-        		"}";
-        channel.basicPublish("", queueNamePublish, null, message.getBytes(StandardCharsets.UTF_8));
+    private void sendMessageToReducer(String fileId, String filename) throws IOException {
+        String message = "{\n" +
+                "  \"FileID\": \"" + fileId + "\",\n" +
+                "  \"FileName\": \"" + filename + "\"\n" +
+                "}";
+        reduceChannel.basicPublish("", REDUCE_WORKER_QUEUE, null, message.getBytes(StandardCharsets.UTF_8));
     }
 
     private void storeSortedChunk(byte[] sortOutput, String fileId, Integer chunk) {
         db.getCollection("sorted.chunks").insertOne(new Document()
-                .append("fileId", fileId)
+                .append("file_id", fileId)
                 .append("chunk", chunk)
                 .append("data", sortOutput)
         );

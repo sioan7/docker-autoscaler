@@ -32,19 +32,23 @@ public class NumberWorker extends AbstractWorker {
 
     private DeliverCallback createDeliverCallback() {
         return (consumerTag, delivery) -> {
-            String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-            JSONObject jsonObject = new JSONObject(message);
-            String fileID = (String) jsonObject.get("FileID");
-            String fileName = (String) jsonObject.get("FileName");
-            System.out.println("Received file name " + fileName);
-            byte[] file = getFileFromMyMongo(fileID);
-            int amountOfNumbers = findNumbers(file);
-            db.getCollection("numbers").insertOne(new Document()
-                    .append("fileId", fileID)
-                    .append("amount", amountOfNumbers)
-            );
-            System.out.println(amountOfNumbers + " numbers are in the file " + fileName);
-            channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+            try {
+                String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+                JSONObject jsonObject = new JSONObject(message);
+                String fileID = (String) jsonObject.get("FileID");
+                String fileName = (String) jsonObject.get("FileName");
+                System.out.println("Received file name " + fileName);
+                byte[] file = getFileFromMyMongo(fileID);
+                int amountOfNumbers = findNumbers(file);
+                db.getCollection("numbers").insertOne(new Document()
+                        .append("file_id", fileID)
+                        .append("amount", amountOfNumbers)
+                );
+                System.out.println(amountOfNumbers + " numbers are in the file " + fileName);
+                channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         };
     }
 
