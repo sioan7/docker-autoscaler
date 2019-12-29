@@ -5,5 +5,5 @@ public interface IWorker {
 
     void handleTasks();
 
-    File getFileFromMyMongo(String fileId) throws IOException;
+    byte[] getFileFromMyMongo(String fileId) throws IOException;
 }

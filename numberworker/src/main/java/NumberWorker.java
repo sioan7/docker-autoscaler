@@ -2,13 +2,8 @@ import com.rabbitmq.client.DeliverCallback;
 import org.bson.Document;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,7 +37,7 @@ public class NumberWorker extends AbstractWorker {
             String fileID = (String) jsonObject.get("FileID");
             String fileName = (String) jsonObject.get("FileName");
             System.out.println("Received file name " + fileName);
-            File file = getFileFromMyMongo(fileID);
+            byte[] file = getFileFromMyMongo(fileID);
             int amountOfNumbers = findNumbers(file);
             db.getCollection("numbers").insertOne(new Document()
                     .append("fileId", fileID)
@@ -56,30 +51,18 @@ public class NumberWorker extends AbstractWorker {
     /**
      * This method gets a file and reads all Integer out of it.
      * It will return the amount of Integer, but it would also be possible to return the numbers.
-     *
-     * @param textFile : java.io.File
      */
-    int findNumbers(File textFile) {
-        List numbers = new ArrayList();
+    int findNumbers(byte[] data) {
         int numberCounter = 0;
         Pattern p = Pattern.compile("-?\\d+");
-        try {
-            FileReader fr = new FileReader(textFile);   //reads the file
-            BufferedReader br = new BufferedReader(fr);  //creates a buffering character input stream
-            String line;
-            while ((line = br.readLine()) != null) {
-                Matcher m = p.matcher(line);
-                while (m.find()) {
-                    String s = m.group();
-                    numbers.add(Integer.parseInt(s));
-                    numberCounter++;
-                }
+        String[] split = new String(data, StandardCharsets.UTF_8).split("\n");
+        for (String line : split) {
+            Matcher m = p.matcher(line);
+            while (m.find()) {
+                String s = m.group();
+                numberCounter++;
             }
-            fr.close();    //closes the stream and release the resources
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-
         return numberCounter;
     }
 }

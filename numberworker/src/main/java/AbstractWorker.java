@@ -8,6 +8,7 @@ import com.mongodb.client.gridfs.GridFSDownloadStream;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import org.bson.types.ObjectId;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -51,17 +52,17 @@ public abstract class AbstractWorker implements IWorker {
     }
 
 
-    public File getFileFromMyMongo(String fileId) throws IOException {
-        GridFSDownloadStream downloadStream = gridFSBucket.openDownloadStream(fileId);
+    public byte[] getFileFromMyMongo(String fileId) throws IOException {
+        GridFSDownloadStream downloadStream = gridFSBucket.openDownloadStream(new ObjectId(fileId));
         int fileLength = (int) downloadStream.getGridFSFile().getLength();
         byte[] bytesToWriteTo = new byte[fileLength];
         downloadStream.read(bytesToWriteTo);
         downloadStream.close();
 
-        File tempFile = File.createTempFile("Temporary", ".txt", null);
-        FileOutputStream fos = new FileOutputStream(tempFile);
-        fos.write(bytesToWriteTo);
+//        File tempFile = File.createTempFile("Temporary", ".txt", null);
+//        FileOutputStream fos = new FileOutputStream(tempFile);
+//        fos.write(bytesToWriteTo);
 
-        return tempFile;
+        return bytesToWriteTo;
     }
 }

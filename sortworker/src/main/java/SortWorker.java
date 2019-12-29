@@ -1,12 +1,9 @@
-import com.mongodb.client.gridfs.GridFSUploadStream;
-import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.rabbitmq.client.DeliverCallback;
 import org.bson.Document;
+import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -36,10 +33,10 @@ public class SortWorker extends AbstractWorker {
             String fileId = (String) jsonObject.get("FileID");
             Integer chunk = (Integer) jsonObject.get("Chunk");
             System.out.println("Received chunk " + chunk + " from " + fileId);
-            byte[] data = (byte[]) db.getCollection("fs.chunks")
-                    .find(and(eq("files_id", fileId), eq("n", chunk)))
+            byte[] data = ((Binary) db.getCollection("fs.chunks")
+                    .find(and(eq("files_id", new ObjectId(fileId)), eq("n", chunk)))
                     .first()
-                    .get("data");
+                    .get("data")).getData();
             storeSortedChunk(sortChunk(data), fileId, chunk);
             int totalChunks = db.getCollection("fs.chunks")
                     .find(eq("files_id", fileId))
@@ -47,7 +44,7 @@ public class SortWorker extends AbstractWorker {
             if (chunk == totalChunks - 1) {
                 sendMessageToReducer(fileId);
             }
-            System.out.println("Chunk is sorted and stored in the MongoDB");
+            System.out.println("Chunk is sorted and stored in MongoDB");
             channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
         };
 
@@ -72,7 +69,7 @@ public class SortWorker extends AbstractWorker {
     }
 
     private void storeSortedChunk(byte[] sortOutput, String fileId, Integer chunk) {
-        db.getCollection("numbers").insertOne(new Document()
+        db.getCollection("sorted.chunks").insertOne(new Document()
                 .append("fileId", fileId)
                 .append("chunk", chunk)
                 .append("data", sortOutput)
