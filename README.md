@@ -1,12 +1,20 @@
 # cco-assignment2
 
+## RUN
+Build the application with **docker-compose**
+
+```
+docker-compose build
+docker-compose up
+```
+
 ## TODO
-- [ ] IOAN -> Front end
+- [x] IOAN -> Front end
 - [x] JAN -> Number worker
 - [ ] JAN -> Sort worker
 - [ ] JAN -> Reduce worker
-- [ ] IOAN -> Containerize each component with Docker
-- [ ] IOAN -> Deploy to Kubernetes / with docker-compose
+- [x] IOAN -> Containerize each component with Docker
+- [x] IOAN -> Deploy to Kubernetes / with docker-compose
 
 Each component has to be its own application so it is containerizable.
 
@@ -54,13 +62,6 @@ Implementation
 - write output to the DB
 
 ## Commands
-
-Build the application with **docker-compose**
-
-```
-docker-compose build
-docker-compose up
-```
 
 Install MongoDB and spinn up a Docker container
 
