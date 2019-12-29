@@ -1,0 +1,50 @@
+version: '3'
+services:
+    mymongo:
+        image: "mongo:latest"
+        expose:
+            - 27017
+        ports:
+            - "27017:27017"
+    myrabbit:
+        image: "rabbitmq:3-management"
+        expose:
+            - 15672
+        ports:
+            - "15672:15672"
+    frontend:
+        build: "./frontend"
+        expose:
+            - 8080
+        ports:
+            - "8080:8080"
+        links:
+            - myrabbit
+            - mymongo
+        depends_on: 
+            - myrabbit
+            - mymongo
+    numberworker:
+        build: "./numberworker"
+        links:
+            - myrabbit
+            - mymongo
+        depends_on: 
+            - myrabbit
+            - mymongo
+    sortworker:
+        build: "./sortworker"
+        links:
+            - myrabbit
+            - mymongo
+        depends_on: 
+            - myrabbit
+            - mymongo
+    reduceworker:
+        build: "./reduceworker"
+        links:
+            - myrabbit
+            - mymongo
+        depends_on: 
+            - myrabbit
+            - mymongo
