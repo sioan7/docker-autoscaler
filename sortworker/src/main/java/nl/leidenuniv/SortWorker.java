@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -25,7 +26,7 @@ public class SortWorker extends AbstractWorker {
     private final String REDUCE_WORKER_QUEUE = "ReduceWorkerMQ";
 
     public SortWorker() throws IOException, TimeoutException {
-        super("SortWorkerMQ", "nl.leidenuniv.SortWorker", 5672);
+        super("SortWorkerMQ", "SortWorker", 5672);
         reduceChannel = connection.createChannel();
         reduceChannel.queueDeclare(REDUCE_WORKER_QUEUE, false, false, false, null);
         reduceChannel.basicQos(1); // accept only one unack-ed message at a time (see below)
@@ -44,18 +45,10 @@ public class SortWorker extends AbstractWorker {
                 String filename = (String) jsonObject.get("FileName");
                 Integer chunk = (Integer) jsonObject.get("Chunk");
                 System.out.println("Received chunk " + chunk + " from " + fileId);
-                byte[] data = ((Binary) db.getCollection("fs.chunks")
-                        .find(and(eq("files_id", new ObjectId(fileId)), eq("n", chunk)))
-                        .first()
-                        .get("data")).getData();
+                int totalChunks = fetchTotalNumberOfChunks(fileId);
+                String[] data = assembleLinesForCurrentChunk(fileId, chunk, totalChunks);
                 storeSortedChunk(sortChunk(data), fileId, chunk);
-                int totalChunks = db.getCollection("fs.chunks")
-                        .find(eq("files_id", new ObjectId(fileId)))
-                        .into(new ArrayList<>()).size();
-                int processedChunks = db.getCollection("sorted.chunks")
-                        .find(eq("file_id", fileId))
-                        .into(new ArrayList<>()).size();
-                if (processedChunks == totalChunks) {
+                if (getNumberOfProcessedChunks(fileId) == totalChunks) {
                     sendMessageToReducer(fileId, filename);
                     gridFSBucket.delete(new ObjectId(fileId));
                 }
@@ -99,11 +92,10 @@ public class SortWorker extends AbstractWorker {
         System.out.println("Stored fileID " + fileId);
     }
 
-    public byte[] sortChunk(byte[] data) {
+    private byte[] sortChunk(String[] data) {
 		String outputString = "";
         Pattern p = Pattern.compile("-?\\d+");
-        String[] split = new String(data, StandardCharsets.UTF_8).split("\n");
-        for (String line : split) {
+        for (String line : data) {
             List<Integer> numbers = new ArrayList<>();
             Matcher m = p.matcher(line);
             while (m.find()) {
@@ -120,5 +112,35 @@ public class SortWorker extends AbstractWorker {
             outputString = outputString + "\n";
         }
         return outputString.getBytes(StandardCharsets.UTF_8);
+    }
+
+    private String[] fetchChunkData(String fileId, Integer chunk) {
+        byte[] data = ((Binary) db.getCollection("fs.chunks")
+                .find(and(eq("files_id", new ObjectId(fileId)), eq("n", chunk)))
+                .first()
+                .get("data")).getData();
+        return new String(data, StandardCharsets.UTF_8).split("\n");
+    }
+
+    private String[] assembleLinesForCurrentChunk(String fileId, int chunk, int totalChunks) {
+        String[] lines = fetchChunkData(fileId, chunk);
+        if (chunk != totalChunks - 1) {
+            String[] nextChunkLines = fetchChunkData(fileId, chunk + 1);
+            lines[lines.length - 1] = lines[lines.length - 1] + nextChunkLines[0];
+        }
+        int firstIndex = chunk == 0 ? 0 : 1;
+        return Arrays.copyOfRange(lines, firstIndex, lines.length);
+    }
+
+    private int fetchTotalNumberOfChunks(String fileId) {
+        return db.getCollection("fs.chunks")
+                .find(eq("files_id", new ObjectId(fileId)))
+                .into(new ArrayList<>()).size();
+    }
+
+    private int getNumberOfProcessedChunks(String fileId) {
+        return db.getCollection("sorted.chunks")
+                .find(eq("file_id", fileId))
+                .into(new ArrayList<>()).size();
     }
 }
