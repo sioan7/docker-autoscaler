@@ -58,28 +58,9 @@ function checkDownloadStatus() {
         if (result) {
             clearInterval(downloadStatusIntervalId);
             document.getElementById('currentStatus').textContent = 'Current status: DONE';
-            document.getElementById('downloadButton').style.visibility = 'visible';
+            const el = document.getElementById('downloadLink');
+            el.href = '/download?fileId=' + fileId + ';filename=' + filename;
+            el.style.visibility = 'visible';
         }
     });
-}
-
-function downloadFile() {
-    fetch('http://localhost:8080/download?fileId=' + fileId + ';filename=' + filename, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/octet-stream',
-        }
-    }).then((r) => r.blob()).then((r) => r.text()).then((data) => {
-        download(filename + '-' + fileId + '.txt', data);
-    });
-}
-
-function download(filename, data) {
-    var element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + data);
-    element.setAttribute('download', filename);
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
 }

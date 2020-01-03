@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -68,11 +69,7 @@ public class ReduceWorker extends AbstractWorker {
             if (listOfNumberLists.get(indexOfListOfNumbersLists).isEmpty())
                 listOfNumberLists.remove(indexOfListOfNumbersLists);
         }
-        String resultString = "";
-        for (int integ : returnList) {
-            resultString = resultString + integ +" ";
-        }
-        return resultString;
+        return returnList.stream().map(Object::toString).collect(Collectors.joining(" "));
     }
 
     public List<List<Integer>> getInputForReduceLists(String fileId){
@@ -80,16 +77,7 @@ public class ReduceWorker extends AbstractWorker {
         db.getCollection("sorted.chunks")
                 .find(eq("file_id", fileId))
                 .forEach((Consumer<? super Document>) it -> {
-                    String data = new String(((Binary) it.get("data")).getData(), StandardCharsets.UTF_8);
-                    String[] split = data.split("\n");
-                    List<Integer> numbers = new ArrayList<>();
-                    for (String line : split) {
-                        String[] nos = line.split(" ");
-                        for (String s : nos) {
-                            numbers.add(Integer.parseInt(s));
-                        }
-                    }
-                    output.add(numbers);
+                    output.add(it.getList("data", Integer.class));
                 });
         return output;
     }

@@ -29,9 +29,9 @@ val index: HTML.() -> Unit = {
             id = "numberResult"
             +"Number of numbers: unknown"
         }
-        button {
-            onClick = "downloadFile()"
-            id = "downloadButton"
+        a {
+            href = "/download?fileId=5e0f5f4ab3a64e6f7a33f001;filename=100"
+            id = "downloadLink"
             +"DOWNLOAD"
         }
     }

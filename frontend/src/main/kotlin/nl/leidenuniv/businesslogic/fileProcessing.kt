@@ -8,18 +8,24 @@ import com.mongodb.client.model.Filters.eq
 import com.rabbitmq.client.ConnectionFactory
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
-import io.ktor.http.*
+import io.ktor.http.ContentDisposition
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
 import io.ktor.http.content.streamProvider
 import io.ktor.request.receiveMultipart
-import io.ktor.response.respond
+import io.ktor.response.*
 import io.ktor.util.pipeline.PipelineContext
 import org.bson.types.ObjectId
 
 
 private const val numberWorkerQueue = "NumberWorkerMQ"
 private const val sortWorkerQueue = "SortWorkerMQ"
+private const val mongoDBHost = "localhost"
+private const val rabbitMQHost = "localhost"
+//private const val mongoDBHost = "mymongo"
+//private const val rabbitMQHost = "myrabbit"
 
 data class NumberWorkerMessage(val FileID: String, val FileName: String)
 data class SortWorkerMessage(val FileID: String, val FileName: String, val Chunk: Long)
@@ -35,7 +41,7 @@ fun processUploadedFile(): suspend PipelineContext<Unit, ApplicationCall>.(Unit)
                 }
                 is PartData.FileItem -> {
                     part.streamProvider().use {
-                        val mongoClient = MongoClients.create("mongodb://mymongo")
+                        val mongoClient = MongoClients.create("mongodb://$mongoDBHost")
                         val myDatabase = mongoClient.getDatabase("TextDocumentsDB")
                         val gridFSBucket = GridFSBuckets.create(myDatabase)
                         val options = GridFSUploadOptions().chunkSizeBytes(255 * 1024)
@@ -45,7 +51,7 @@ fun processUploadedFile(): suspend PipelineContext<Unit, ApplicationCall>.(Unit)
                         val objectId = fileId?.toHexString().orEmpty()
                         mongoClient.close()
                         val factory = ConnectionFactory()
-                        factory.host = "myrabbit"
+                        factory.host = rabbitMQHost
                         factory.newConnection().use { connection ->
                             connection.createChannel().use { channel ->
                                 val gsonBuilder = GsonBuilder().create()
@@ -91,7 +97,7 @@ fun processUploadedFile(): suspend PipelineContext<Unit, ApplicationCall>.(Unit)
 fun retrieveNumberWorkerResult(): suspend PipelineContext<Unit, ApplicationCall>.(Unit) -> Unit {
     return {
         val fileId = call.request.queryParameters["fileId"]
-        val mongoClient = MongoClients.create("mongodb://mymongo")
+        val mongoClient = MongoClients.create("mongodb://$mongoDBHost")
         val myDatabase = mongoClient.getDatabase("TextDocumentsDB")
         val amount = myDatabase.getCollection("numbers").find(eq("file_id", fileId)).first()?.get("amount")
         mongoClient.close()
@@ -102,13 +108,13 @@ fun retrieveNumberWorkerResult(): suspend PipelineContext<Unit, ApplicationCall>
 fun retrieveSortWorkerResult(): suspend PipelineContext<Unit, ApplicationCall>.(Unit) -> Unit {
     return {
         val fileId = call.request.queryParameters["fileId"]
-        val mongoClient = MongoClients.create("mongodb://mymongo")
+        val mongoClient = MongoClients.create("mongodb://$mongoDBHost")
         val myDatabase = mongoClient.getDatabase("TextDocumentsDB")
-        val rawChunks = myDatabase.getCollection("fs.chunks").find(eq("files_id", fileId)).count().toLong()
+        val rawChunks = myDatabase.getCollection("fs.chunks").find(eq("files_id", ObjectId(fileId))).count().toLong()
         val processedChunks = myDatabase.getCollection("sorted.chunks").find(eq("file_id", fileId)).count().toLong()
         mongoClient.close()
         val status = when {
-            processedChunks < rawChunks -> "$processedChunks / $rawChunks"
+            processedChunks < rawChunks -> "sorting $processedChunks / $rawChunks"
             else -> "merging chunks"
         }
         call.respond(HttpStatusCode.OK, mapOf("value" to status))
@@ -119,7 +125,7 @@ fun retrieveDownloadStatus(): suspend PipelineContext<Unit, ApplicationCall>.(Un
     return {
         val fileId = call.request.queryParameters["fileId"]
         val filename = call.request.queryParameters["filename"]
-        val mongoClient = MongoClients.create("mongodb://mymongo")
+        val mongoClient = MongoClients.create("mongodb://$mongoDBHost")
         val myDatabase = mongoClient.getDatabase("TextDocumentsDB")
         val gridFSBucket = GridFSBuckets.create(myDatabase)
         val available = gridFSBucket.find((eq("filename", "$filename-$fileId"))).first() != null
@@ -132,7 +138,7 @@ fun downloadFile(): suspend PipelineContext<Unit, ApplicationCall>.(Unit) -> Uni
     return {
         val fileId = call.request.queryParameters["fileId"]
         val filename = call.request.queryParameters["filename"]
-        val mongoClient = MongoClients.create("mongodb://mymongo")
+        val mongoClient = MongoClients.create("mongodb://$mongoDBHost")
         val myDatabase = mongoClient.getDatabase("TextDocumentsDB")
         val gridFSBucket = GridFSBuckets.create(myDatabase)
         val properFilename = "$filename-$fileId"
@@ -143,6 +149,13 @@ fun downloadFile(): suspend PipelineContext<Unit, ApplicationCall>.(Unit) -> Uni
         downloadStream.read(fileData)
         downloadStream.close()
         mongoClient.close()
-        call.respond(HttpStatusCode.OK, fileData)
+        call.response.header(
+            HttpHeaders.ContentDisposition,
+            ContentDisposition.Attachment.withParameter(
+                ContentDisposition.Parameters.FileName,
+                properFilename
+            ).toString()
+        )
+        call.respondBytes(fileData)
     }
 }

@@ -76,11 +76,11 @@ public class SortWorker extends AbstractWorker {
         reduceChannel.basicPublish("", REDUCE_WORKER_QUEUE, null, message.getBytes(StandardCharsets.UTF_8));
     }
 
-    private void storeSortedChunk(byte[] sortOutput, String fileId, Integer chunk) {
+    private void storeSortedChunk(List<Integer> numbers, String fileId, Integer chunk) {
         db.getCollection("sorted.chunks").insertOne(new Document()
                 .append("file_id", fileId)
                 .append("chunk", chunk)
-                .append("data", sortOutput)
+                .append("data", numbers)
         );
 
 //    	GridFSUploadOptions options = new GridFSUploadOptions().chunkSizeBytes(255 * 1024).metadata(new Document("type", "text"));
@@ -92,11 +92,11 @@ public class SortWorker extends AbstractWorker {
         System.out.println("Stored fileID " + fileId);
     }
 
-    private byte[] sortChunk(String[] data) {
+    private List<Integer> sortChunk(String[] data) {
 		String outputString = "";
         Pattern p = Pattern.compile("-?\\d+");
+        List<Integer> numbers = new ArrayList<>();
         for (String line : data) {
-            List<Integer> numbers = new ArrayList<>();
             Matcher m = p.matcher(line);
             while (m.find()) {
                 String s = m.group();
@@ -105,13 +105,8 @@ public class SortWorker extends AbstractWorker {
             if(numbers.isEmpty())
                 continue;
             Collections.sort(numbers);
-            for(int number : numbers)
-            {
-                outputString = outputString + number + " ";
-            }
-            outputString = outputString + "\n";
         }
-        return outputString.getBytes(StandardCharsets.UTF_8);
+        return numbers;
     }
 
     private String[] fetchChunkData(String fileId, Integer chunk) {

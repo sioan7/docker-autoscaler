@@ -47,7 +47,7 @@ fun Route.routePages() {
 
 fun Route.routeStaticResources() {
     static("static") {
-        staticRootFolder = File("static")
+        staticRootFolder = File("src/main/resources/static")
         files("css")
         files("js")
         file("favicon.ico")

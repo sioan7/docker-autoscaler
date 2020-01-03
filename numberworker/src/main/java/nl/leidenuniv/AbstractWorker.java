@@ -16,6 +16,11 @@ import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
 public abstract class AbstractWorker implements IWorker {
+    public static final String MONGO_DB_HOST = "localhost";
+    public static final String RABBIT_MQ_HOST = "localhost";
+//    public static final String MONGO_DB_HOST = "mymongo";
+//    public static final String RABBIT_MQ_HOST = "myrabbit";
+
     String QueueName;
     String ServiceName;
 
@@ -36,14 +41,14 @@ public abstract class AbstractWorker implements IWorker {
         ServiceName = serviceName;
 
         //MongoDB inits
-        mongoClient = MongoClients.create(new ConnectionString("mongodb://mymongo"));
+        mongoClient = MongoClients.create(new ConnectionString("mongodb://" + MONGO_DB_HOST));
         db = mongoClient.getDatabase("TextDocumentsDB");
         // Create a gridFSBucket with a custom bucket name "files"
         gridFSBucket = GridFSBuckets.create(db);
 
         //RabbitMQ inits
         factory = new ConnectionFactory();
-        factory.setHost("myrabbit");
+        factory.setHost(RABBIT_MQ_HOST);
 //        factory.setPort(MQPort);
         while (connection == null) {
             try {
