@@ -16,10 +16,10 @@ import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
 public abstract class AbstractWorker implements IWorker {
-    public static final String MONGO_DB_HOST = "localhost";
-    public static final String RABBIT_MQ_HOST = "localhost";
-//    public static final String MONGO_DB_HOST = "mymongo";
-//    public static final String RABBIT_MQ_HOST = "myrabbit";
+//    public static final String MONGO_DB_HOST = "localhost";
+//    public static final String RABBIT_MQ_HOST = "localhost";
+    public static final String MONGO_DB_HOST = "mymongo";
+    public static final String RABBIT_MQ_HOST = "myrabbit";
 
     String QueueName;
     String ServiceName;
