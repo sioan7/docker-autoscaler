@@ -87,7 +87,6 @@ public class SortWorker extends AbstractWorker {
     }
 
     private List<Integer> sortChunk(String[] data) {
-		String outputString = "";
         Pattern p = Pattern.compile("-?\\d+");
         List<Integer> numbers = new ArrayList<>();
         for (String line : data) {
@@ -96,10 +95,8 @@ public class SortWorker extends AbstractWorker {
                 String s = m.group();
                 numbers.add(Integer.parseInt(s));
             }
-            if(numbers.isEmpty())
-                continue;
-            Collections.sort(numbers);
         }
+        Collections.sort(numbers);
         return numbers;
     }
 
