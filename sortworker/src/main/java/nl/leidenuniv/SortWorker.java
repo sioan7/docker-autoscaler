@@ -82,12 +82,6 @@ public class SortWorker extends AbstractWorker {
                 .append("chunk", chunk)
                 .append("data", numbers)
         );
-
-//    	GridFSUploadOptions options = new GridFSUploadOptions().chunkSizeBytes(255 * 1024).metadata(new Document("type", "text"));
-//    	GridFSUploadStream uploadStream = gridFSBucket.openUploadStream(fileNameSorted, options);
-//    	uploadStream.write(sortOutput);
-//    	uploadStream.close();
-//    	ObjectId fileId = uploadStream.getFileId();
     	
         System.out.println("Stored fileID " + fileId);
     }

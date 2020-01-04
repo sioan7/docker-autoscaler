@@ -30,7 +30,6 @@ val index: HTML.() -> Unit = {
             +"Number of numbers: unknown"
         }
         a {
-            href = "/download?fileId=5e0f5f4ab3a64e6f7a33f001;filename=100"
             id = "downloadLink"
             +"DOWNLOAD"
         }
