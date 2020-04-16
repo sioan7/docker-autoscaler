@@ -8,14 +8,6 @@ docker-compose build
 docker-compose up
 ```
 
-## TODO
-- [x] IOAN -> Front end
-- [x] JAN -> Number worker
-- [ ] JAN -> Sort worker
-- [ ] JAN -> Reduce worker
-- [x] IOAN -> Containerize each component with Docker
-- [x] IOAN -> Deploy to Kubernetes / with docker-compose
-
 Each component has to be its own application so it is containerizable.
 
 ###
